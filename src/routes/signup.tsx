@@ -22,7 +22,7 @@ export const Route = createFileRoute('/signup')({
     ],
   }),
   beforeLoad: () => {
-    throw redirect({ to: '/signin' })
+    throw redirect({ to: '/signin', search: { mode: 'signup' } })
   },
   component: () => null,
 })

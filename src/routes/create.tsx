@@ -154,7 +154,8 @@ function CreateSet() {
         },
       })
       navigate({ to: '/set/$id', params: { id: result.id } })
-    } catch {
+    } catch (err) {
+      console.error('[create] Error creating set:', err)
       setError('Something went wrong')
       setSaving(false)
     }

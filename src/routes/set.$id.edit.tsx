@@ -111,7 +111,8 @@ function EditSet() {
     try {
       await updateSet({ data: { setId: id, title, description, subject, cards: filled } })
       navigate({ to: '/set/$id', params: { id } })
-    } catch {
+    } catch (err) {
+      console.error('[edit] Error saving set:', err)
       setError('Something went wrong')
       setSaving(false)
     }
