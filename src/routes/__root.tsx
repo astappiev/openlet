@@ -15,7 +15,10 @@ import { LogoMark } from '../components/logo'
 import { Tooltip } from '../components/ui/tooltip'
 import { ConfirmDialog } from '../components/confirm-dialog'
 
-const siteUrl = process.env.VITE_SITE_URL ?? 'https://openletapp.vercel.app'
+const siteUrl =
+  (typeof process !== 'undefined' ? process.env.VITE_SITE_URL : null) ||
+  (typeof window !== 'undefined' ? (window as any).env?.VITE_SITE_URL : null) ||
+  ''
 
 export const Route = createRootRoute({
   head: () => ({
@@ -373,7 +376,9 @@ function Footer() {
   return (
     <footer className="border-t border-[#e8eaf0] bg-white">
       <div className="mx-auto flex max-w-6xl flex-col items-center gap-3 px-4 py-5 sm:flex-row sm:justify-between sm:px-6">
-        <span className="text-xs text-[#7c84a0]">&copy; {new Date().getFullYear()} Openlet</span>
+        <span className="text-xs text-[#7c84a0]">
+          &copy; {new Date().getFullYear()} Openlet
+        </span>
         <nav className="flex flex-wrap items-center gap-x-5 gap-y-1 text-xs font-semibold text-[#7c84a0]">
           <a href="/legal/terms" className="hover:text-[#1a1d26]">
             Terms
@@ -411,10 +416,20 @@ function RootComponent() {
 }
 
 function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
+  const envScript = `window.env = {
+    VITE_SITE_URL: ${JSON.stringify(typeof process !== 'undefined' ? process.env.VITE_SITE_URL || '' : '')},
+    VITE_SUPABASE_URL: ${JSON.stringify(typeof process !== 'undefined' ? process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || '' : '')},
+    VITE_SUPABASE_ANON_KEY: ${JSON.stringify(typeof process !== 'undefined' ? process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || '' : '')}
+  };`
+
   return (
     <html lang="en" className="scroll-smooth">
       <head>
         <HeadContent />
+        <script
+          suppressHydrationWarning
+          dangerouslySetInnerHTML={{ __html: envScript }}
+        />
       </head>
       <body className="flex min-h-screen flex-col bg-white font-sans text-[#1a1d26] antialiased">
         <ErrorBoundary fallback={<ErrorFallback />}>
