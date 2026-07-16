@@ -87,8 +87,7 @@ Open the `.env` file and populate the `DATABASE_URL`, `VITE_SUPABASE_URL`, and `
 Push the database schema and apply RLS policies:
 
 ```bash
-pnpm drizzle-kit push
-node --env-file=.env scripts/apply-migration.mjs
+pnpm drizzle-kit migrate
 ```
 
 Start the development server:

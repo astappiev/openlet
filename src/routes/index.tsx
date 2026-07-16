@@ -126,9 +126,9 @@ function Nav() {
         </a>
         <div className="hidden items-center gap-6 md:flex">
           {[
-            ['#study', 'Study modes'],
-            ['#why', 'Why free'],
-            ['https://github.com/anomalyco/Openlet', 'GitHub'],
+            ["#study", "Study modes"],
+            ["#why", "Why free"],
+            ["https://github.com/ChloeVPin/openlet", "GitHub"],
           ].map(([href, label]) => (
             <a
               key={label}
@@ -158,7 +158,7 @@ function Nav() {
         </div>
       </Shell>
     </header>
-  )
+  );
 }
 
 function HeroCard() {
@@ -1128,7 +1128,7 @@ function Cta() {
             <ArrowRight className="size-4" />
           </a>
           <a
-            href="https://github.com/anomalyco/Openlet"
+            href="https://github.com/ChloeVPin/openlet"
             className="inline-flex h-12 items-center rounded-lg border border-white/30 px-6 text-sm font-bold text-white outline-none hover:bg-white/10"
           >
             View source
@@ -1136,12 +1136,12 @@ function Cta() {
         </div>
       </Shell>
     </section>
-  )
+  );
 }
 
 function Footer() {
   return (
-    <footer style={{ backgroundColor: '#0b0d17' }}>
+    <footer style={{ backgroundColor: "#0b0d17" }}>
       <Shell className="flex flex-col gap-8 py-10 text-center md:flex-row md:items-start md:justify-between md:text-left">
         <div className="mx-auto max-w-xs md:mx-0">
           <a
@@ -1174,7 +1174,10 @@ function Footer() {
           <a href="/legal/privacy" className="hover:text-white">
             Privacy
           </a>
-          <a href="https://github.com/anomalyco/Openlet" className="hover:text-white">
+          <a
+            href="https://github.com/ChloeVPin/openlet"
+            className="hover:text-white"
+          >
             GitHub
           </a>
         </nav>
@@ -1185,7 +1188,7 @@ function Footer() {
         </p>
       </Shell>
     </footer>
-  )
+  );
 }
 
 function Home() {

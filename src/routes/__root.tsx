@@ -381,13 +381,16 @@ function Footer() {
           <a href="/legal/privacy" className="hover:text-[#1a1d26]">
             Privacy
           </a>
-          <a href="https://github.com/anomalyco/Openlet" className="hover:text-[#1a1d26]">
+          <a
+            href="https://github.com/ChloeVPin/openlet"
+            className="hover:text-[#1a1d26]"
+          >
             GitHub
           </a>
         </nav>
       </div>
     </footer>
-  )
+  );
 }
 
 function RootComponent() {
