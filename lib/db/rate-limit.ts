@@ -1,6 +1,6 @@
-import { eq, lt, sql } from 'drizzle-orm'
-import { db } from './index'
-import { rateLimits } from './schema'
+import { eq, lt, sql } from "drizzle-orm";
+import { db } from "./index";
+import { rateLimits } from "./schema";
 
 /**
  * Token-bucket rate limiter backed by Postgres.
@@ -19,10 +19,10 @@ export async function checkRateLimit(
   windowMs: number = 60_000,
 ): Promise<boolean> {
   // Prune stale rows for this key
-  await db.delete(rateLimits).where(lt(rateLimits.resetAt, new Date()))
+  await db.delete(rateLimits).where(lt(rateLimits.resetAt, new Date()));
 
-  const now = new Date()
-  const resetAt = new Date(Date.now() + windowMs)
+  const now = new Date();
+  const resetAt = new Date(Date.now() + windowMs);
 
   // Atomic upsert: increment count or insert a fresh row
   const [row] = await db
@@ -35,7 +35,7 @@ export async function checkRateLimit(
         resetAt,
       },
     })
-    .returning()
+    .returning();
 
-  return row ? row.count <= max : true
+  return row ? row.count <= max : true;
 }

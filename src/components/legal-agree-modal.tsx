@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState } from 'react'
-import { Dialog } from './ui/dialog'
-import { Button } from './ui/button'
-import type { LegalDoc } from '../lib/legal'
+import { useEffect, useRef, useState } from "react";
+import { Dialog } from "./ui/dialog";
+import { Button } from "./ui/button";
+import type { LegalDoc } from "../lib/legal";
 
 /**
  * Scroll-to-bottom agree modal.
@@ -14,33 +14,33 @@ export function LegalAgreeModal({
   onAgree,
   onClose,
 }: {
-  open: boolean
-  doc: LegalDoc
-  alreadyAgreed?: boolean
-  onAgree: () => void
-  onClose: () => void
+  open: boolean;
+  doc: LegalDoc;
+  alreadyAgreed?: boolean;
+  onAgree: () => void;
+  onClose: () => void;
 }) {
-  const scrollerRef = useRef<HTMLDivElement>(null)
-  const [atBottom, setAtBottom] = useState(false)
+  const scrollerRef = useRef<HTMLDivElement>(null);
+  const [atBottom, setAtBottom] = useState(false);
 
   useEffect(() => {
-    if (!open) return
-    setAtBottom(false)
+    if (!open) return;
+    setAtBottom(false);
     requestAnimationFrame(() => {
-      const node = scrollerRef.current
-      if (!node) return
-      if (node.scrollHeight <= node.clientHeight + 8) setAtBottom(true)
-    })
-  }, [open, doc.title])
+      const node = scrollerRef.current;
+      if (!node) return;
+      if (node.scrollHeight <= node.clientHeight + 8) setAtBottom(true);
+    });
+  }, [open, doc.title]);
 
   function onScroll() {
-    const el = scrollerRef.current
-    if (!el) return
-    const remaining = el.scrollHeight - el.scrollTop - el.clientHeight
-    if (remaining <= 24) setAtBottom(true)
+    const el = scrollerRef.current;
+    if (!el) return;
+    const remaining = el.scrollHeight - el.scrollTop - el.clientHeight;
+    if (remaining <= 24) setAtBottom(true);
   }
 
-  const canAgree = alreadyAgreed || atBottom
+  const canAgree = alreadyAgreed || atBottom;
 
   return (
     <Dialog
@@ -53,7 +53,12 @@ export function LegalAgreeModal({
       bodyClassName="!p-0"
       footer={
         <>
-          <Button variant="outline" size="md" onClick={onClose} className="w-full sm:w-auto">
+          <Button
+            variant="outline"
+            size="md"
+            onClick={onClose}
+            className="w-full sm:w-auto"
+          >
             Close
           </Button>
           <Button
@@ -61,11 +66,15 @@ export function LegalAgreeModal({
             className="w-full sm:w-auto"
             disabled={!canAgree}
             onClick={() => {
-              onAgree()
-              onClose()
+              onAgree();
+              onClose();
             }}
           >
-            {alreadyAgreed ? 'Agreed' : canAgree ? 'I agree' : 'Scroll to continue'}
+            {alreadyAgreed
+              ? "Agreed"
+              : canAgree
+                ? "I agree"
+                : "Scroll to continue"}
           </Button>
         </>
       }
@@ -79,7 +88,9 @@ export function LegalAgreeModal({
           {doc.sections.map((s) => (
             <section key={s.heading}>
               <h3 className="text-sm font-bold text-[#303545] ">{s.heading}</h3>
-              <p className="mt-1.5 text-sm leading-relaxed text-[#646f90]">{s.body}</p>
+              <p className="mt-1.5 text-sm leading-relaxed text-[#646f90]">
+                {s.body}
+              </p>
             </section>
           ))}
         </div>
@@ -87,5 +98,5 @@ export function LegalAgreeModal({
         <div className="h-2" aria-hidden />
       </div>
     </Dialog>
-  )
+  );
 }

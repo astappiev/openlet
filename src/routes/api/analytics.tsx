@@ -1,32 +1,36 @@
-import { createFileRoute } from '@tanstack/react-router'
-import { db } from '../../../lib/db'
-import { cardMetadata, studySessions, cards } from '../../../lib/db/schema'
-import { eq, sql } from 'drizzle-orm'
-import { createClient } from '../../lib/supabase/server'
-import { checkRateLimit } from '../../../lib/db/rate-limit'
+import { createFileRoute } from "@tanstack/react-router";
+import { db } from "../../../lib/db";
+import { cardMetadata, studySessions, cards } from "../../../lib/db/schema";
+import { eq, sql } from "drizzle-orm";
+import { createClient } from "../../lib/supabase/server";
+import { checkRateLimit } from "../../../lib/db/rate-limit";
 
-export const Route = createFileRoute('/api/analytics')({
+export const Route = createFileRoute("/api/analytics")({
   server: {
     handlers: {
       GET: async () => {
-        const { supabase, flushCookies } = createClient()
+        const { supabase, flushCookies } = createClient();
         const {
           data: { user: payload },
-        } = await supabase.auth.getUser()
-        flushCookies()
+        } = await supabase.auth.getUser();
+        flushCookies();
         if (!payload) {
-          return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+          return new Response(JSON.stringify({ error: "Unauthorized" }), {
             status: 401,
-            headers: { 'Content-Type': 'application/json' },
-          })
+            headers: { "Content-Type": "application/json" },
+          });
         }
 
-        const allowed = await checkRateLimit(`analytics:${payload.id}`, 30, 60_000)
+        const allowed = await checkRateLimit(
+          `analytics:${payload.id}`,
+          30,
+          60_000,
+        );
         if (!allowed) {
-          return new Response(JSON.stringify({ error: 'Too many requests' }), {
+          return new Response(JSON.stringify({ error: "Too many requests" }), {
             status: 429,
-            headers: { 'Content-Type': 'application/json' },
-          })
+            headers: { "Content-Type": "application/json" },
+          });
         }
 
         // 1. Heatmap data: Count study sessions per day for the last year
@@ -39,22 +43,22 @@ export const Route = createFileRoute('/api/analytics')({
             AND created_at >= NOW() - INTERVAL '365 days'
           GROUP BY DATE(created_at)
           ORDER BY date ASC
-        `)
+        `);
 
         const heatmap = heatmapQuery.map((row: any) => {
-          let dateStr = ''
+          let dateStr = "";
           if (row.date instanceof Date) {
-            dateStr = row.date.toISOString().split('T')[0]
-          } else if (typeof row.date === 'string') {
-            dateStr = row.date.split('T')[0]
+            dateStr = row.date.toISOString().split("T")[0];
+          } else if (typeof row.date === "string") {
+            dateStr = row.date.split("T")[0];
           } else {
-            dateStr = String(row.date || '')
+            dateStr = String(row.date || "");
           }
           return {
             date: dateStr,
             count: Number(row.count),
-          }
-        })
+          };
+        });
 
         // 2. Weakest cards (lowest stability, highest reps)
         const weakestCardsQuery = await db
@@ -69,7 +73,7 @@ export const Route = createFileRoute('/api/analytics')({
           .innerJoin(cards, eq(cardMetadata.cardId, cards.id))
           .where(eq(cardMetadata.userId, payload.id))
           .orderBy(cardMetadata.stability)
-          .limit(10)
+          .limit(10);
 
         // 3. Retention overall: Average stability and total reps across all cards
         const overallQuery = await db.execute(sql`
@@ -79,9 +83,13 @@ export const Route = createFileRoute('/api/analytics')({
             SUM(lapses) as total_lapses
           FROM ${cardMetadata}
           WHERE user_id = ${payload.id}
-        `)
+        `);
 
-        const overall = overallQuery[0] || { avg_stability: 0, total_reps: 0, total_lapses: 0 }
+        const overall = overallQuery[0] || {
+          avg_stability: 0,
+          total_reps: 0,
+          total_lapses: 0,
+        };
 
         return new Response(
           JSON.stringify({
@@ -94,10 +102,13 @@ export const Route = createFileRoute('/api/analytics')({
             },
           }),
           {
-            headers: { 'Content-Type': 'application/json', 'Cache-Control': 'private' },
+            headers: {
+              "Content-Type": "application/json",
+              "Cache-Control": "private",
+            },
           },
-        )
+        );
       },
     },
   },
-})
+});

@@ -34,27 +34,27 @@
 
 ## Features
 
-* **Five study modes:** Engage with Flashcards, Learn (FSRS spaced repetition), Write, Match, and Test environments.
-* **Spaced repetition:** Utilize a custom FSRS implementation for highly optimized memory scheduling and retention.
-* **AI generation:** Automatically generate flashcards directly from lecture notes or textbooks.
-* **Image occlusion:** Create visually engaging cards by hiding specific parts of images.
-* **Importing:** Support for direct CSV file uploads and bulk text pasting.
-* **Collaboration:** Share sets via public links with built-in visibility toggles.
-* **Authentication:** Seamless Google and GitHub sign-in powered by Supabase Auth.
-* **Security:** Postgres-backed token bucket rate limiting on all API routes to protect endpoints.
+- **Five study modes:** Engage with Flashcards, Learn (FSRS spaced repetition), Write, Match, and Test environments.
+- **Spaced repetition:** Utilize a custom FSRS implementation for highly optimized memory scheduling and retention.
+- **AI generation:** Automatically generate flashcards directly from lecture notes or textbooks.
+- **Image occlusion:** Create visually engaging cards by hiding specific parts of images.
+- **Importing:** Support for direct CSV file uploads and bulk text pasting.
+- **Collaboration:** Share sets via public links with built-in visibility toggles.
+- **Authentication:** Seamless Google and GitHub sign-in powered by Supabase Auth.
+- **Security:** Postgres-backed token bucket rate limiting on all API routes to protect endpoints.
 
 ## Technology Stack
 
-| Component | Choice |
-| :--- | :--- |
-| **Framework** | [TanStack Start](https://tanstack.com/start) (React 19, Server-Side Rendering) |
-| **Routing** | [TanStack Router](https://tanstack.com/router) |
-| **Styling** | [Tailwind CSS v4](https://tailwindcss.com) |
-| **Database** | [Postgres](https://postgresql.org) hosted on [Supabase](https://supabase.com) |
-| **ORM** | [Drizzle ORM](https://orm.drizzle.team) |
-| **Authentication** | [Supabase Auth](https://supabase.com/auth) utilizing SSR cookie sessions |
-| **Hosting** | [Vercel](https://vercel.com) |
-| **Algorithms** | Custom [FSRS](https://github.com/open-spaced-repetition/fsrs.js) implementation |
+| Component          | Choice                                                                          |
+| :----------------- | :------------------------------------------------------------------------------ |
+| **Framework**      | [TanStack Start](https://tanstack.com/start) (React 19, Server-Side Rendering)  |
+| **Routing**        | [TanStack Router](https://tanstack.com/router)                                  |
+| **Styling**        | [Tailwind CSS v4](https://tailwindcss.com)                                      |
+| **Database**       | [Postgres](https://postgresql.org) hosted on [Supabase](https://supabase.com)   |
+| **ORM**            | [Drizzle ORM](https://orm.drizzle.team)                                         |
+| **Authentication** | [Supabase Auth](https://supabase.com/auth) utilizing SSR cookie sessions        |
+| **Hosting**        | [Vercel](https://vercel.com)                                                    |
+| **Algorithms**     | Custom [FSRS](https://github.com/open-spaced-repetition/fsrs.js) implementation |
 
 ## Getting Started
 
@@ -62,9 +62,9 @@
 
 Ensure the following tools are installed on your system before proceeding:
 
-* Node.js v20 or higher
-* [pnpm](https://pnpm.io) package manager
-* A Supabase project (the free tier is fully supported)
+- Node.js v20 or higher
+- [pnpm](https://pnpm.io) package manager
+- A Supabase project (the free tier is fully supported)
 
 ### Local Setup
 
@@ -100,13 +100,13 @@ Navigate to `http://localhost:3000` in your browser.
 
 ### Environment Variables
 
-| Variable | Required | Description |
-| :--- | :--- | :--- |
-| `DATABASE_URL` | Yes | Postgres connection string (Supabase pooler port 6543) |
-| `VITE_SUPABASE_URL` | Yes | Supabase project URL from API settings |
-| `VITE_SUPABASE_ANON_KEY` | Yes | Supabase anonymous public key from API settings |
-| `VITE_SITE_URL` | No | Your deployment URL (defaults to Vercel preview environments) |
-| `NODE_ENV` | No | Target environment (development or production) |
+| Variable                 | Required | Description                                                   |
+| :----------------------- | :------- | :------------------------------------------------------------ |
+| `DATABASE_URL`           | Yes      | Postgres connection string (Supabase pooler port 6543)        |
+| `VITE_SUPABASE_URL`      | Yes      | Supabase project URL from API settings                        |
+| `VITE_SUPABASE_ANON_KEY` | Yes      | Supabase anonymous public key from API settings               |
+| `VITE_SITE_URL`          | No       | Your deployment URL (defaults to Vercel preview environments) |
+| `NODE_ENV`               | No       | Target environment (development or production)                |
 
 ### Configuring OAuth Providers
 

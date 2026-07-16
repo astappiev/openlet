@@ -1,15 +1,15 @@
-import { createFileRoute, redirect } from '@tanstack/react-router'
-import { useEffect, useState } from 'react'
-import { z } from 'zod'
-import { ProductPage, SectionLabel } from '../components/product-layout'
-import { SetCard, type SetCardData } from '../components/set-card'
-import { Users, ArrowLeft, Pencil, Plus, Trash2, X } from 'lucide-react'
-import { Button } from '../components/ui/button'
-import { Dialog } from '../components/ui/dialog'
-import { Input } from '../components/ui/input'
-import { Textarea } from '../components/ui/textarea'
-import { Field, fieldA11y } from '../components/ui/field'
-import { ConfirmDialog } from '../components/confirm-dialog'
+import { createFileRoute, redirect } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { z } from "zod";
+import { ProductPage, SectionLabel } from "../components/product-layout";
+import { SetCard, type SetCardData } from "../components/set-card";
+import { Users, ArrowLeft, Pencil, Plus, Trash2, X } from "lucide-react";
+import { Button } from "../components/ui/button";
+import { Dialog } from "../components/ui/dialog";
+import { Input } from "../components/ui/input";
+import { Textarea } from "../components/ui/textarea";
+import { Field, fieldA11y } from "../components/ui/field";
+import { ConfirmDialog } from "../components/confirm-dialog";
 import {
   addSetToClass,
   deleteClass,
@@ -17,150 +17,161 @@ import {
   leaveClass,
   removeSetFromClass,
   updateClass,
-} from '../lib/actions/classes'
+} from "../lib/actions/classes";
 
 const ClassForm = z.object({
-  name: z.string().trim().min(1, 'Enter a class name.').max(200),
-  description: z.string().max(1000, 'Description must be 1,000 characters or less.'),
-  school: z.string().max(200, 'School must be 200 characters or less.'),
-  visibility: z.enum(['private', 'public']),
-})
+  name: z.string().trim().min(1, "Enter a class name.").max(200),
+  description: z
+    .string()
+    .max(1000, "Description must be 1,000 characters or less."),
+  school: z.string().max(200, "School must be 200 characters or less."),
+  visibility: z.enum(["private", "public"]),
+});
 
-export const Route = createFileRoute('/class/$id')({
+export const Route = createFileRoute("/class/$id")({
   beforeLoad: async () => {
-    const { getSession } = await import('../../src/lib/auth/actions')
-    const session = await getSession()
-    if (!session) throw redirect({ to: '/signin' })
+    const { getSession } = await import("../../src/lib/auth/actions");
+    const session = await getSession();
+    if (!session) throw redirect({ to: "/signin" });
   },
   component: ClassPage,
-})
+});
 
 function ClassPage() {
-  const { id } = Route.useParams()
-  const navigate = Route.useNavigate()
-  const [classData, setClassData] = useState<any>(null)
-  const [sets, setSets] = useState<any[]>([])
-  const [members, setMembers] = useState<any[]>([])
-  const [mySets, setMySets] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
-  const [tab, setTab] = useState<'sets' | 'members'>('sets')
-  const [editing, setEditing] = useState(false)
-  const [adding, setAdding] = useState(false)
-  const [confirmDelete, setConfirmDelete] = useState(false)
-  const [saving, setSaving] = useState(false)
-  const [joining, setJoining] = useState(false)
-  const [leaving, setLeaving] = useState(false)
-  const [removingId, setRemovingId] = useState<string | null>(null)
-  const [formError, setFormError] = useState<Record<string, string>>({})
+  const { id } = Route.useParams();
+  const navigate = Route.useNavigate();
+  const [classData, setClassData] = useState<any>(null);
+  const [sets, setSets] = useState<any[]>([]);
+  const [members, setMembers] = useState<any[]>([]);
+  const [mySets, setMySets] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [tab, setTab] = useState<"sets" | "members">("sets");
+  const [editing, setEditing] = useState(false);
+  const [adding, setAdding] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [joining, setJoining] = useState(false);
+  const [leaving, setLeaving] = useState(false);
+  const [removingId, setRemovingId] = useState<string | null>(null);
+  const [formError, setFormError] = useState<Record<string, string>>({});
 
   const load = async () => {
-    const response = await fetch(`/api/classes/${id}`)
-    if (!response.ok) throw new Error('Not found')
-    const data = await response.json()
-    setClassData(data.classData)
-    setSets(data.sets || [])
-    setMembers(data.members || [])
-  }
+    const response = await fetch(`/api/classes/${id}`);
+    if (!response.ok) throw new Error("Not found");
+    const data = await response.json();
+    setClassData(data.classData);
+    setSets(data.sets || []);
+    setMembers(data.members || []);
+  };
 
   useEffect(() => {
     Promise.all([
       load(),
-      fetch('/api/dashboard').then((response) => (response.ok ? response.json() : { sets: [] })),
+      fetch("/api/dashboard").then((response) =>
+        response.ok ? response.json() : { sets: [] },
+      ),
     ])
       .then(([, dashboard]) => setMySets(dashboard.sets || []))
       .catch(() => {})
-      .finally(() => setLoading(false))
-  }, [id])
+      .finally(() => setLoading(false));
+  }, [id]);
 
   if (loading)
     return (
       <ProductPage wide>
         <div className="h-32 animate-pulse rounded-2xl bg-[#e8eaf0]" />
       </ProductPage>
-    )
+    );
   if (!classData)
     return (
       <ProductPage wide>
-        <div className="py-12 text-center text-sm text-[#4a5065]">Class not found.</div>
+        <div className="py-12 text-center text-sm text-[#4a5065]">
+          Class not found.
+        </div>
       </ProductPage>
-    )
+    );
 
-  const isAdmin = classData.role === 'admin'
-  const isMember = Boolean(classData.role)
-  const availableSets = mySets.filter((set) => !sets.some((linked) => linked.id === set.id))
+  const isAdmin = classData.role === "admin";
+  const isMember = Boolean(classData.role);
+  const availableSets = mySets.filter(
+    (set) => !sets.some((linked) => linked.id === set.id),
+  );
 
   async function saveClass(form: FormData) {
     const result = ClassForm.safeParse({
-      name: form.get('name'),
-      description: form.get('description') || '',
-      school: form.get('school') || '',
-      visibility: form.get('visibility') || 'private',
-    })
+      name: form.get("name"),
+      description: form.get("description") || "",
+      school: form.get("school") || "",
+      visibility: form.get("visibility") || "private",
+    });
     if (!result.success) {
       setFormError(
         Object.fromEntries(
-          result.error.issues.map((issue) => [String(issue.path[0]), issue.message]),
+          result.error.issues.map((issue) => [
+            String(issue.path[0]),
+            issue.message,
+          ]),
         ),
-      )
-      return
+      );
+      return;
     }
-    setSaving(true)
+    setSaving(true);
     try {
-      await updateClass({ data: { classId: id, ...result.data } })
-      setClassData((current: any) => ({ ...current, ...result.data }))
-      setEditing(false)
+      await updateClass({ data: { classId: id, ...result.data } });
+      setClassData((current: any) => ({ ...current, ...result.data }));
+      setEditing(false);
     } catch {
-      setFormError({ form: 'Could not save this class. Try again.' })
+      setFormError({ form: "Could not save this class. Try again." });
     } finally {
-      setSaving(false)
+      setSaving(false);
     }
   }
 
   async function addSet(set: any) {
-    setSets((current) => [...current, set])
+    setSets((current) => [...current, set]);
     try {
-      await addSetToClass({ data: { classId: id, setId: set.id } })
+      await addSetToClass({ data: { classId: id, setId: set.id } });
     } catch {
-      setSets((current) => current.filter((item) => item.id !== set.id))
+      setSets((current) => current.filter((item) => item.id !== set.id));
     }
   }
   async function removeSet(setId: string) {
-    const previous = sets
-    setRemovingId(setId)
-    setSets((current) => current.filter((set) => set.id !== setId))
+    const previous = sets;
+    setRemovingId(setId);
+    setSets((current) => current.filter((set) => set.id !== setId));
     try {
-      await removeSetFromClass({ data: { classId: id, setId } })
+      await removeSetFromClass({ data: { classId: id, setId } });
     } catch {
-      setSets(previous)
+      setSets(previous);
     } finally {
-      setRemovingId(null)
+      setRemovingId(null);
     }
   }
   async function join() {
-    setJoining(true)
+    setJoining(true);
     try {
-      await joinClass({ data: { classId: id } })
-      await load()
+      await joinClass({ data: { classId: id } });
+      await load();
     } finally {
-      setJoining(false)
+      setJoining(false);
     }
   }
   async function leave() {
-    setLeaving(true)
+    setLeaving(true);
     try {
-      await leaveClass({ data: { classId: id } })
-      await navigate({ to: '/dashboard' })
+      await leaveClass({ data: { classId: id } });
+      await navigate({ to: "/dashboard" });
     } finally {
-      setLeaving(false)
+      setLeaving(false);
     }
   }
   async function destroy() {
-    setSaving(true)
+    setSaving(true);
     try {
-      await deleteClass({ data: { classId: id } })
-      await navigate({ to: '/dashboard' })
+      await deleteClass({ data: { classId: id } });
+      await navigate({ to: "/dashboard" });
     } finally {
-      setSaving(false)
+      setSaving(false);
     }
   }
 
@@ -178,12 +189,16 @@ function ClassPage() {
             <Users className="size-6" />
           </div>
           <div>
-            <h1 className="text-2xl font-extrabold text-[#1a1d26]">{classData.name}</h1>
+            <h1 className="text-2xl font-extrabold text-[#1a1d26]">
+              {classData.name}
+            </h1>
             <p className="text-sm font-semibold text-[#646f90]">
-              {classData.school || 'No school specified'}
+              {classData.school || "No school specified"}
             </p>
             {classData.description && (
-              <p className="mt-1 text-sm text-[#4a5065]">{classData.description}</p>
+              <p className="mt-1 text-sm text-[#4a5065]">
+                {classData.description}
+              </p>
             )}
           </div>
         </div>
@@ -193,8 +208,8 @@ function ClassPage() {
               variant="outline"
               size="sm"
               onClick={() => {
-                setFormError({})
-                setEditing(true)
+                setFormError({});
+                setEditing(true);
               }}
             >
               <Pencil className="size-3.5" /> Edit class
@@ -202,17 +217,26 @@ function ClassPage() {
             <Button size="sm" onClick={() => setAdding(true)}>
               <Plus className="size-3.5" /> Add sets
             </Button>
-            <Button variant="danger" size="sm" onClick={() => setConfirmDelete(true)}>
+            <Button
+              variant="danger"
+              size="sm"
+              onClick={() => setConfirmDelete(true)}
+            >
               <Trash2 className="size-3.5" /> Delete
             </Button>
           </div>
         ) : isMember ? (
-          <Button variant="outline" size="sm" onClick={() => void leave()} disabled={leaving}>
-            {leaving ? 'Leaving…' : 'Leave class'}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => void leave()}
+            disabled={leaving}
+          >
+            {leaving ? "Leaving…" : "Leave class"}
           </Button>
         ) : (
           <Button size="sm" onClick={() => void join()} disabled={joining}>
-            {joining ? 'Joining…' : 'Join class'}
+            {joining ? "Joining…" : "Join class"}
           </Button>
         )}
       </div>
@@ -220,21 +244,21 @@ function ClassPage() {
         <div className="mt-6 flex gap-2">
           <button
             type="button"
-            onClick={() => setTab('sets')}
-            className={`rounded-full px-4 py-1.5 text-sm font-bold ${tab === 'sets' ? 'bg-[#1a1d26] text-white' : 'bg-white text-[#4a5065] hover:bg-[#e8eaf0]'}`}
+            onClick={() => setTab("sets")}
+            className={`rounded-full px-4 py-1.5 text-sm font-bold ${tab === "sets" ? "bg-[#1a1d26] text-white" : "bg-white text-[#4a5065] hover:bg-[#e8eaf0]"}`}
           >
             Sets
           </button>
           <button
             type="button"
-            onClick={() => setTab('members')}
-            className={`rounded-full px-4 py-1.5 text-sm font-bold ${tab === 'members' ? 'bg-[#1a1d26] text-white' : 'bg-white text-[#4a5065] hover:bg-[#e8eaf0]'}`}
+            onClick={() => setTab("members")}
+            className={`rounded-full px-4 py-1.5 text-sm font-bold ${tab === "members" ? "bg-[#1a1d26] text-white" : "bg-white text-[#4a5065] hover:bg-[#e8eaf0]"}`}
           >
             Members ({members.length})
           </button>
         </div>
       )}
-      {tab === 'members' && isMember ? (
+      {tab === "members" && isMember ? (
         <div className="mt-6 overflow-hidden rounded-xl border border-[#e8eaf0] bg-white">
           {members.map((member) => (
             <div
@@ -242,7 +266,7 @@ function ClassPage() {
               className="flex items-center justify-between border-b border-[#f0f1f5] px-4 py-3 last:border-0"
             >
               <span className="text-sm font-bold text-[#1a1d26]">
-                {member.name || 'Unnamed member'}
+                {member.name || "Unnamed member"}
               </span>
               <span className="rounded-full bg-[#eef0ff] px-2 py-0.5 text-xs font-bold text-[#2a35b8]">
                 {member.role}
@@ -285,11 +309,15 @@ function ClassPage() {
         description="Update class details and visibility."
         footer={
           <>
-            <Button variant="outline" onClick={() => setEditing(false)} disabled={saving}>
+            <Button
+              variant="outline"
+              onClick={() => setEditing(false)}
+              disabled={saving}
+            >
               Cancel
             </Button>
             <Button type="submit" form="class-form" disabled={saving}>
-              {saving ? 'Saving…' : 'Save changes'}
+              {saving ? "Saving…" : "Save changes"}
             </Button>
           </>
         }
@@ -298,30 +326,34 @@ function ClassPage() {
           id="class-form"
           className="space-y-4"
           onSubmit={(event) => {
-            event.preventDefault()
-            void saveClass(new FormData(event.currentTarget))
+            event.preventDefault();
+            void saveClass(new FormData(event.currentTarget));
           }}
         >
           <Field id="class-name" label="Name" error={formError.name}>
             <Input
-              {...fieldA11y('class-name', formError.name)}
+              {...fieldA11y("class-name", formError.name)}
               name="name"
               defaultValue={classData.name}
             />
           </Field>
-          <Field id="class-description" label="Description" error={formError.description}>
+          <Field
+            id="class-description"
+            label="Description"
+            error={formError.description}
+          >
             <Textarea
-              {...fieldA11y('class-description', formError.description)}
+              {...fieldA11y("class-description", formError.description)}
               name="description"
-              defaultValue={classData.description || ''}
+              defaultValue={classData.description || ""}
               rows={3}
             />
           </Field>
           <Field id="class-school" label="School" error={formError.school}>
             <Input
-              {...fieldA11y('class-school', formError.school)}
+              {...fieldA11y("class-school", formError.school)}
               name="school"
-              defaultValue={classData.school || ''}
+              defaultValue={classData.school || ""}
             />
           </Field>
           <Field id="class-visibility" label="Visibility">
@@ -379,5 +411,5 @@ function ClassPage() {
         onCancel={() => setConfirmDelete(false)}
       />
     </ProductPage>
-  )
+  );
 }

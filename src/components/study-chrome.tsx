@@ -1,8 +1,8 @@
-import type { ReactNode } from 'react'
-import { ArrowLeft } from 'lucide-react'
-import { Progress } from './ui/progress'
-import { cn } from '../lib/cn'
-import { Tooltip } from './ui/tooltip'
+import type { ReactNode } from "react";
+import { ArrowLeft } from "lucide-react";
+import { Progress } from "./ui/progress";
+import { cn } from "../lib/cn";
+import { Tooltip } from "./ui/tooltip";
 
 export function StudyChrome({
   backHref,
@@ -15,18 +15,23 @@ export function StudyChrome({
   className,
   fullHeight = true,
 }: {
-  backHref: string
-  title: string
-  progress?: number
-  progressLabel?: string
-  right?: ReactNode
-  children: ReactNode
-  footer?: ReactNode
-  className?: string
-  fullHeight?: boolean
+  backHref: string;
+  title: string;
+  progress?: number;
+  progressLabel?: string;
+  right?: ReactNode;
+  children: ReactNode;
+  footer?: ReactNode;
+  className?: string;
+  fullHeight?: boolean;
 }) {
   return (
-    <div className={cn(fullHeight && 'flex min-h-screen flex-col bg-[#f6f7fb]', className)}>
+    <div
+      className={cn(
+        fullHeight && "flex min-h-screen flex-col bg-[#f6f7fb]",
+        className,
+      )}
+    >
       <header className="border-b border-[#e8eaf0] bg-white">
         <div className="mx-auto flex max-w-3xl items-center gap-3 px-4 py-3 sm:px-6">
           <Tooltip label="Back to set" side="bottom">
@@ -40,14 +45,16 @@ export function StudyChrome({
           </Tooltip>
           <div className="min-w-0 flex-1">
             <div className="flex items-center justify-between gap-3">
-              <p className="truncate text-sm font-bold text-[#1a1d26]">{title}</p>
+              <p className="truncate text-sm font-bold text-[#1a1d26]">
+                {title}
+              </p>
               {progressLabel && (
                 <span className="shrink-0 text-xs font-bold tabular-nums text-[#7c84a0]">
                   {progressLabel}
                 </span>
               )}
             </div>
-            {typeof progress === 'number' && (
+            {typeof progress === "number" && (
               <Progress value={progress} className="mt-2 h-1.5 bg-[#e8eaf0]" />
             )}
           </div>
@@ -65,7 +72,7 @@ export function StudyChrome({
         </div>
       )}
     </div>
-  )
+  );
 }
 
 export function StudyDone({
@@ -78,24 +85,28 @@ export function StudyDone({
   secondaryHref,
   secondaryLabel,
 }: {
-  percent: number
-  correct: number
-  total: number
-  subtitle?: string
-  primaryHref: string
-  primaryLabel: string
-  secondaryHref: string
-  secondaryLabel: string
+  percent: number;
+  correct: number;
+  total: number;
+  subtitle?: string;
+  primaryHref: string;
+  primaryLabel: string;
+  secondaryHref: string;
+  secondaryLabel: string;
 }) {
   return (
     <div className="flex flex-1 flex-col items-center justify-center py-12 text-center">
       <div className="flex size-28 items-center justify-center rounded-full border-4 border-[#eef0ff] bg-white shadow-sm">
-        <span className="text-4xl font-extrabold tabular-nums text-[#4255ff]">{percent}%</span>
+        <span className="text-4xl font-extrabold tabular-nums text-[#4255ff]">
+          {percent}%
+        </span>
       </div>
       <p className="mt-6 text-lg font-bold text-[#1a1d26]">
         {correct} of {total} correct
       </p>
-      {subtitle && <p className="mt-2 max-w-xs text-sm text-[#4a5065]">{subtitle}</p>}
+      {subtitle && (
+        <p className="mt-2 max-w-xs text-sm text-[#4a5065]">{subtitle}</p>
+      )}
       <div className="mt-8 flex flex-wrap justify-center gap-2">
         <a
           href={primaryHref}
@@ -111,5 +122,5 @@ export function StudyDone({
         </a>
       </div>
     </div>
-  )
+  );
 }

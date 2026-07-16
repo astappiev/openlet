@@ -1,58 +1,70 @@
-import { createFileRoute, redirect } from '@tanstack/react-router'
-import { useEffect, useState } from 'react'
-import { ProductPage, SectionLabel } from '../components/product-layout'
-import { SetCard, type SetCardData } from '../components/set-card'
-import { Folder as FolderIcon, ArrowLeft, Pencil, Trash2, X } from 'lucide-react'
-import { z } from 'zod'
-import { Button } from '../components/ui/button'
-import { Dialog } from '../components/ui/dialog'
-import { Input } from '../components/ui/input'
-import { Textarea } from '../components/ui/textarea'
-import { Field, fieldA11y } from '../components/ui/field'
-import { ConfirmDialog } from '../components/confirm-dialog'
-import { deleteFolder, removeSetFromFolder, updateFolder } from '../lib/actions/folders'
+import { createFileRoute, redirect } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { ProductPage, SectionLabel } from "../components/product-layout";
+import { SetCard, type SetCardData } from "../components/set-card";
+import {
+  Folder as FolderIcon,
+  ArrowLeft,
+  Pencil,
+  Trash2,
+  X,
+} from "lucide-react";
+import { z } from "zod";
+import { Button } from "../components/ui/button";
+import { Dialog } from "../components/ui/dialog";
+import { Input } from "../components/ui/input";
+import { Textarea } from "../components/ui/textarea";
+import { Field, fieldA11y } from "../components/ui/field";
+import { ConfirmDialog } from "../components/confirm-dialog";
+import {
+  deleteFolder,
+  removeSetFromFolder,
+  updateFolder,
+} from "../lib/actions/folders";
 
 const FolderForm = z.object({
-  name: z.string().trim().min(1, 'Enter a folder name.').max(200),
-  description: z.string().max(1000, 'Description must be 1,000 characters or less.'),
-  visibility: z.enum(['private', 'public']),
-})
+  name: z.string().trim().min(1, "Enter a folder name.").max(200),
+  description: z
+    .string()
+    .max(1000, "Description must be 1,000 characters or less."),
+  visibility: z.enum(["private", "public"]),
+});
 
-export const Route = createFileRoute('/folder/$id')({
+export const Route = createFileRoute("/folder/$id")({
   beforeLoad: async () => {
-    const { getSession } = await import('../../src/lib/auth/actions')
-    const session = await getSession()
-    if (!session) throw redirect({ to: '/signin' })
+    const { getSession } = await import("../../src/lib/auth/actions");
+    const session = await getSession();
+    if (!session) throw redirect({ to: "/signin" });
   },
   component: FolderPage,
-})
+});
 
 function FolderPage() {
-  const { id } = Route.useParams()
-  const navigate = Route.useNavigate()
-  const [folder, setFolder] = useState<any>(null)
-  const [sets, setSets] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
-  const [editing, setEditing] = useState(false)
-  const [deleting, setDeleting] = useState(false)
-  const [confirmDelete, setConfirmDelete] = useState(false)
-  const [saving, setSaving] = useState(false)
-  const [removingId, setRemovingId] = useState<string | null>(null)
-  const [formError, setFormError] = useState<Record<string, string>>({})
+  const { id } = Route.useParams();
+  const navigate = Route.useNavigate();
+  const [folder, setFolder] = useState<any>(null);
+  const [sets, setSets] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [editing, setEditing] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [removingId, setRemovingId] = useState<string | null>(null);
+  const [formError, setFormError] = useState<Record<string, string>>({});
 
   useEffect(() => {
     fetch(`/api/folders/${id}`)
       .then((r) => {
-        if (!r.ok) throw new Error('Not found')
-        return r.json()
+        if (!r.ok) throw new Error("Not found");
+        return r.json();
       })
       .then((data) => {
-        setFolder(data.folder)
-        setSets(data.sets || [])
-        setLoading(false)
+        setFolder(data.folder);
+        setSets(data.sets || []);
+        setLoading(false);
       })
-      .catch(() => setLoading(false))
-  }, [id])
+      .catch(() => setLoading(false));
+  }, [id]);
 
   if (loading) {
     return (
@@ -66,63 +78,68 @@ function FolderPage() {
           </div>
         </div>
       </ProductPage>
-    )
+    );
   }
 
   if (!folder) {
     return (
       <ProductPage wide>
-        <div className="text-center py-12 text-sm text-[#4a5065]">Folder not found.</div>
+        <div className="text-center py-12 text-sm text-[#4a5065]">
+          Folder not found.
+        </div>
       </ProductPage>
-    )
+    );
   }
 
   async function saveFolder(form: FormData) {
     const result = FolderForm.safeParse({
-      name: form.get('name'),
-      description: form.get('description') || '',
-      visibility: form.get('visibility') || 'private',
-    })
+      name: form.get("name"),
+      description: form.get("description") || "",
+      visibility: form.get("visibility") || "private",
+    });
     if (!result.success) {
       setFormError(
         Object.fromEntries(
-          result.error.issues.map((issue) => [String(issue.path[0]), issue.message]),
+          result.error.issues.map((issue) => [
+            String(issue.path[0]),
+            issue.message,
+          ]),
         ),
-      )
-      return
+      );
+      return;
     }
-    setSaving(true)
+    setSaving(true);
     try {
-      await updateFolder({ data: { folderId: id, ...result.data } })
-      setFolder((current: any) => ({ ...current, ...result.data }))
-      setEditing(false)
+      await updateFolder({ data: { folderId: id, ...result.data } });
+      setFolder((current: any) => ({ ...current, ...result.data }));
+      setEditing(false);
     } catch {
-      setFormError({ form: 'Could not save this folder. Try again.' })
+      setFormError({ form: "Could not save this folder. Try again." });
     } finally {
-      setSaving(false)
+      setSaving(false);
     }
   }
 
   async function removeSet(setId: string) {
-    setRemovingId(setId)
-    const previous = sets
-    setSets((current) => current.filter((set) => set.id !== setId))
+    setRemovingId(setId);
+    const previous = sets;
+    setSets((current) => current.filter((set) => set.id !== setId));
     try {
-      await removeSetFromFolder({ data: { folderId: id, setId } })
+      await removeSetFromFolder({ data: { folderId: id, setId } });
     } catch {
-      setSets(previous)
+      setSets(previous);
     } finally {
-      setRemovingId(null)
+      setRemovingId(null);
     }
   }
 
   async function removeFolder() {
-    setDeleting(true)
+    setDeleting(true);
     try {
-      await deleteFolder({ data: { folderId: id } })
-      await navigate({ to: '/dashboard' })
+      await deleteFolder({ data: { folderId: id } });
+      await navigate({ to: "/dashboard" });
     } finally {
-      setDeleting(false)
+      setDeleting(false);
     }
   }
 
@@ -141,8 +158,12 @@ function FolderPage() {
             <FolderIcon className="size-6" />
           </div>
           <div>
-            <h1 className="text-2xl font-extrabold text-[#1a1d26]">{folder.name}</h1>
-            {folder.description && <p className="text-sm text-[#4a5065]">{folder.description}</p>}
+            <h1 className="text-2xl font-extrabold text-[#1a1d26]">
+              {folder.name}
+            </h1>
+            {folder.description && (
+              <p className="text-sm text-[#4a5065]">{folder.description}</p>
+            )}
           </div>
         </div>
         <div className="flex gap-2">
@@ -150,13 +171,17 @@ function FolderPage() {
             variant="outline"
             size="sm"
             onClick={() => {
-              setFormError({})
-              setEditing(true)
+              setFormError({});
+              setEditing(true);
             }}
           >
             <Pencil className="size-3.5" /> Edit folder
           </Button>
-          <Button variant="danger" size="sm" onClick={() => setConfirmDelete(true)}>
+          <Button
+            variant="danger"
+            size="sm"
+            onClick={() => setConfirmDelete(true)}
+          >
             <Trash2 className="size-3.5" /> Delete
           </Button>
         </div>
@@ -193,11 +218,15 @@ function FolderPage() {
         description="Update who can access this folder."
         footer={
           <>
-            <Button variant="outline" onClick={() => setEditing(false)} disabled={saving}>
+            <Button
+              variant="outline"
+              onClick={() => setEditing(false)}
+              disabled={saving}
+            >
               Cancel
             </Button>
             <Button type="submit" form="folder-form" disabled={saving}>
-              {saving ? 'Saving…' : 'Save changes'}
+              {saving ? "Saving…" : "Save changes"}
             </Button>
           </>
         }
@@ -206,23 +235,27 @@ function FolderPage() {
           id="folder-form"
           className="space-y-4"
           onSubmit={(event) => {
-            event.preventDefault()
-            void saveFolder(new FormData(event.currentTarget))
+            event.preventDefault();
+            void saveFolder(new FormData(event.currentTarget));
           }}
         >
           <Field id="folder-name" label="Name" error={formError.name}>
             <Input
-              {...fieldA11y('folder-name', formError.name)}
+              {...fieldA11y("folder-name", formError.name)}
               name="name"
               defaultValue={folder.name}
               maxLength={200}
             />
           </Field>
-          <Field id="folder-description" label="Description" error={formError.description}>
+          <Field
+            id="folder-description"
+            label="Description"
+            error={formError.description}
+          >
             <Textarea
-              {...fieldA11y('folder-description', formError.description)}
+              {...fieldA11y("folder-description", formError.description)}
               name="description"
-              defaultValue={folder.description || ''}
+              defaultValue={folder.description || ""}
               rows={3}
               maxLength={1000}
             />
@@ -256,5 +289,5 @@ function FolderPage() {
         onCancel={() => setConfirmDelete(false)}
       />
     </ProductPage>
-  )
+  );
 }

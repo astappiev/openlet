@@ -1,4 +1,4 @@
-import { QueryClient } from '@tanstack/react-query'
+import { QueryClient } from "@tanstack/react-query";
 
 /**
  * Shared QueryClient defaults tuned for snappy navigation:
@@ -20,11 +20,11 @@ export function createQueryClient() {
         retry: 0,
       },
     },
-  })
+  });
 }
 
 export const queryKeys = {
-  dashboard: ['dashboard'] as const,
-  set: (id: string) => ['set', id] as const,
-  session: ['session'] as const,
-}
+  dashboard: ["dashboard"] as const,
+  set: (id: string) => ["set", id] as const,
+  session: ["session"] as const,
+};

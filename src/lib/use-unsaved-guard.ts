@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect } from "react";
 
 /**
  * Warn before closing the tab / hard navigation when dirty.
@@ -6,17 +6,20 @@ import { useEffect } from 'react'
  */
 export function useUnsavedGuard(dirty: boolean) {
   useEffect(() => {
-    if (!dirty) return
+    if (!dirty) return;
     const onBeforeUnload = (e: BeforeUnloadEvent) => {
-      e.preventDefault()
-      e.returnValue = ''
-    }
-    window.addEventListener('beforeunload', onBeforeUnload)
-    return () => window.removeEventListener('beforeunload', onBeforeUnload)
-  }, [dirty])
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+  }, [dirty]);
 }
 
-export function confirmLeave(dirty: boolean, message = 'Discard unsaved changes?'): boolean {
-  if (!dirty) return true
-  return window.confirm(message)
+export function confirmLeave(
+  dirty: boolean,
+  message = "Discard unsaved changes?",
+): boolean {
+  if (!dirty) return true;
+  return window.confirm(message);
 }

@@ -1,5 +1,5 @@
-import { createFileRoute, redirect } from '@tanstack/react-router'
-import { useEffect, useState } from 'react'
+import { createFileRoute, redirect } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import {
   Layers,
   GraduationCap,
@@ -16,145 +16,145 @@ import {
   Folder,
   UsersRound,
   LoaderCircle,
-} from 'lucide-react'
-import { CardSlider } from '../components/card-slider'
-import { deleteSet } from '../../src/lib/actions/sets'
-import { updateSetVisibility } from '../../src/lib/actions/sets'
-import type { Card, StudySet } from '../../lib/types'
-import { Button } from '../components/ui/button'
-import { Dialog } from '../components/ui/dialog'
-import { EmptyState } from '../components/empty-state'
-import { Flashcard } from '../components/flashcard'
-import { ConfirmDialog } from '../components/confirm-dialog'
-import { ProductPage } from '../components/product-layout'
-import { Tooltip } from '../components/ui/tooltip'
-import { addSetToFolder, removeSetFromFolder } from '../lib/actions/folders'
-import { addSetToClass, removeSetFromClass } from '../lib/actions/classes'
+} from "lucide-react";
+import { CardSlider } from "../components/card-slider";
+import { deleteSet } from "../../src/lib/actions/sets";
+import { updateSetVisibility } from "../../src/lib/actions/sets";
+import type { Card, StudySet } from "../../lib/types";
+import { Button } from "../components/ui/button";
+import { Dialog } from "../components/ui/dialog";
+import { EmptyState } from "../components/empty-state";
+import { Flashcard } from "../components/flashcard";
+import { ConfirmDialog } from "../components/confirm-dialog";
+import { ProductPage } from "../components/product-layout";
+import { Tooltip } from "../components/ui/tooltip";
+import { addSetToFolder, removeSetFromFolder } from "../lib/actions/folders";
+import { addSetToClass, removeSetFromClass } from "../lib/actions/classes";
 
-export const Route = createFileRoute('/set/$id/')({
+export const Route = createFileRoute("/set/$id/")({
   head: () => ({
     meta: [
-      { title: 'Study set | Openlet' },
+      { title: "Study set | Openlet" },
       {
-        name: 'description',
+        name: "description",
         content:
-          'View a flashcard study set on Openlet. Preview cards, choose a study mode, and start learning.',
+          "View a flashcard study set on Openlet. Preview cards, choose a study mode, and start learning.",
       },
-      { property: 'og:title', content: 'Study set | Openlet' },
+      { property: "og:title", content: "Study set | Openlet" },
       {
-        property: 'og:description',
+        property: "og:description",
         content:
-          'View a flashcard study set on Openlet. Preview cards, choose a study mode, and start learning.',
+          "View a flashcard study set on Openlet. Preview cards, choose a study mode, and start learning.",
       },
-      { name: 'twitter:title', content: 'Study set | Openlet' },
+      { name: "twitter:title", content: "Study set | Openlet" },
       {
-        name: 'twitter:description',
+        name: "twitter:description",
         content:
-          'View a flashcard study set on Openlet. Preview cards, choose a study mode, and start learning.',
+          "View a flashcard study set on Openlet. Preview cards, choose a study mode, and start learning.",
       },
     ],
   }),
   beforeLoad: async () => {
-    const { getSession } = await import('../../src/lib/auth/actions')
-    const session = await getSession()
-    if (!session) throw redirect({ to: '/signin' })
+    const { getSession } = await import("../../src/lib/auth/actions");
+    const session = await getSession();
+    if (!session) throw redirect({ to: "/signin" });
   },
   component: SetPage,
-})
+});
 
 const MODES = [
   {
-    href: 'flashcards',
+    href: "flashcards",
     icon: Layers,
-    title: 'Flashcards',
-    desc: 'Review terms and definitions',
-    color: '#4255ff',
-    bg: '#eef0ff',
+    title: "Flashcards",
+    desc: "Review terms and definitions",
+    color: "#4255ff",
+    bg: "#eef0ff",
   },
   {
-    href: 'learn',
+    href: "learn",
     icon: GraduationCap,
-    title: 'Learn',
-    desc: 'Spaced repetition',
-    color: '#0f9f6e',
-    bg: '#ecfdf5',
+    title: "Learn",
+    desc: "Spaced repetition",
+    color: "#0f9f6e",
+    bg: "#ecfdf5",
   },
   {
-    href: 'write',
+    href: "write",
     icon: PenLine,
-    title: 'Write',
-    desc: 'Type what you remember',
-    color: '#c47a00',
-    bg: '#fff7ed',
+    title: "Write",
+    desc: "Type what you remember",
+    color: "#c47a00",
+    bg: "#fff7ed",
   },
   {
-    href: 'test',
+    href: "test",
     icon: FileQuestion,
-    title: 'Test',
-    desc: 'Practice questions',
-    color: '#db2777',
-    bg: '#fdf2f8',
+    title: "Test",
+    desc: "Practice questions",
+    color: "#db2777",
+    bg: "#fdf2f8",
   },
   {
-    href: 'match',
+    href: "match",
     icon: LayoutGrid,
-    title: 'Match',
-    desc: 'Get timed matching',
-    color: '#7c3aed',
-    bg: '#f5f3ff',
+    title: "Match",
+    desc: "Get timed matching",
+    color: "#7c3aed",
+    bg: "#f5f3ff",
   },
-] as const
+] as const;
 
 function SetPage() {
-  const { id } = Route.useParams()
-  const navigate = Route.useNavigate()
-  const [setData, setSetData] = useState<StudySet | null>(null)
-  const [cardList, setCardList] = useState<Card[]>([])
-  const [loading, setLoading] = useState(true)
-  const [deleting, setDeleting] = useState(false)
-  const [confirmDelete, setConfirmDelete] = useState(false)
-  const [copied, setCopied] = useState(false)
-  const [menuOpen, setMenuOpen] = useState(false)
-  const [previewIdx, setPreviewIdx] = useState(0)
-  const [flipped, setFlipped] = useState(false)
-  const [isPublic, setIsPublic] = useState(false)
-  const [savingVisibility, setSavingVisibility] = useState(false)
-  const [organizeOpen, setOrganizeOpen] = useState(false)
-  const [folders, setFolders] = useState<any[]>([])
-  const [classes, setClasses] = useState<any[]>([])
-  const [folderIds, setFolderIds] = useState<string[]>([])
-  const [classIds, setClassIds] = useState<string[]>([])
-  const [pendingLink, setPendingLink] = useState<string | null>(null)
+  const { id } = Route.useParams();
+  const navigate = Route.useNavigate();
+  const [setData, setSetData] = useState<StudySet | null>(null);
+  const [cardList, setCardList] = useState<Card[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [deleting, setDeleting] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [previewIdx, setPreviewIdx] = useState(0);
+  const [flipped, setFlipped] = useState(false);
+  const [isPublic, setIsPublic] = useState(false);
+  const [savingVisibility, setSavingVisibility] = useState(false);
+  const [organizeOpen, setOrganizeOpen] = useState(false);
+  const [folders, setFolders] = useState<any[]>([]);
+  const [classes, setClasses] = useState<any[]>([]);
+  const [folderIds, setFolderIds] = useState<string[]>([]);
+  const [classIds, setClassIds] = useState<string[]>([]);
+  const [pendingLink, setPendingLink] = useState<string | null>(null);
 
   useEffect(() => {
     fetch(`/api/sets/${id}`)
       .then((r) => r.json())
       .then((d) => {
-        setSetData(d.set)
-        setCardList(d.cards || [])
-        setIsPublic(d.set?.visibility === 'public')
-        setFolderIds(d.folderIds || [])
-        setClassIds(d.classIds || [])
-        setLoading(false)
+        setSetData(d.set);
+        setCardList(d.cards || []);
+        setIsPublic(d.set?.visibility === "public");
+        setFolderIds(d.folderIds || []);
+        setClassIds(d.classIds || []);
+        setLoading(false);
       })
-      .catch(() => setLoading(false))
-  }, [id])
+      .catch(() => setLoading(false));
+  }, [id]);
 
   useEffect(() => {
-    fetch('/api/dashboard')
+    fetch("/api/dashboard")
       .then((response) => (response.ok ? response.json() : null))
       .then((data) => {
         if (data) {
-          setFolders(data.folders || [])
-          setClasses(data.classes || [])
+          setFolders(data.folders || []);
+          setClasses(data.classes || []);
         }
       })
-      .catch(() => {})
-  }, [])
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
-    setFlipped(false)
-  }, [previewIdx])
+    setFlipped(false);
+  }, [previewIdx]);
 
   if (loading) {
     return (
@@ -162,7 +162,7 @@ function SetPage() {
         <div className="h-10 w-64 animate-pulse rounded-lg bg-white" />
         <div className="mt-8 h-48 animate-pulse rounded-2xl bg-white" />
       </ProductPage>
-    )
+    );
   }
 
   if (!setData) {
@@ -170,54 +170,64 @@ function SetPage() {
       <ProductPage>
         <p className="text-center text-[#4a5065]">Set not found</p>
       </ProductPage>
-    )
+    );
   }
 
   async function handleDelete() {
-    if (deleting) return
-    setDeleting(true)
-    await deleteSet({ data: { setId: id } })
-    navigate({ to: '/dashboard' })
+    if (deleting) return;
+    setDeleting(true);
+    await deleteSet({ data: { setId: id } });
+    navigate({ to: "/dashboard" });
   }
 
   function share() {
-    navigator.clipboard.writeText(`${window.location.origin}/public/${id}`)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
-    setMenuOpen(false)
+    navigator.clipboard.writeText(`${window.location.origin}/public/${id}`);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+    setMenuOpen(false);
   }
 
-  async function toggleLink(kind: 'folder' | 'class', collectionId: string, linked: boolean) {
-    const key = `${kind}:${collectionId}`
-    setPendingLink(key)
-    const setIds = kind === 'folder' ? folderIds : classIds
-    const update = kind === 'folder' ? setFolderIds : setClassIds
-    update(linked ? setIds.filter((value) => value !== collectionId) : [...setIds, collectionId])
+  async function toggleLink(
+    kind: "folder" | "class",
+    collectionId: string,
+    linked: boolean,
+  ) {
+    const key = `${kind}:${collectionId}`;
+    setPendingLink(key);
+    const setIds = kind === "folder" ? folderIds : classIds;
+    const update = kind === "folder" ? setFolderIds : setClassIds;
+    update(
+      linked
+        ? setIds.filter((value) => value !== collectionId)
+        : [...setIds, collectionId],
+    );
     try {
-      if (kind === 'folder') {
+      if (kind === "folder") {
         await (linked ? removeSetFromFolder : addSetToFolder)({
           data: { folderId: collectionId, setId: id },
-        })
+        });
       } else {
         await (linked ? removeSetFromClass : addSetToClass)({
           data: { classId: collectionId, setId: id },
-        })
+        });
       }
     } catch {
-      update(setIds)
+      update(setIds);
     } finally {
-      setPendingLink(null)
+      setPendingLink(null);
     }
   }
 
-  const disabled = cardList.length === 0
+  const disabled = cardList.length === 0;
 
   return (
     <ProductPage>
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
-          <p className="text-xs font-bold uppercase tracking-wide text-[#7c84a0]">Study set</p>
+          <p className="text-xs font-bold uppercase tracking-wide text-[#7c84a0]">
+            Study set
+          </p>
           <h1 className="mt-1 text-3xl font-extrabold tracking-tight text-[#1a1d26]">
             {setData.title}
           </h1>
@@ -236,7 +246,11 @@ function SetPage() {
           </div>
         </div>
         <div className="flex shrink-0 flex-wrap items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => setOrganizeOpen(true)}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setOrganizeOpen(true)}
+          >
             <Folder className="size-3.5" /> Add to folder/class
           </Button>
           <Tooltip label="Edit set">
@@ -279,7 +293,7 @@ function SetPage() {
                   ) : (
                     <Share2 className="size-5 text-[#646f90]" />
                   )}
-                  <span>{copied ? 'Link copied!' : 'Copy share link'}</span>
+                  <span>{copied ? "Link copied!" : "Copy share link"}</span>
                 </button>
 
                 <a
@@ -296,21 +310,26 @@ function SetPage() {
                 <button
                   type="button"
                   onClick={async () => {
-                    setSavingVisibility(true)
+                    setSavingVisibility(true);
                     try {
-                      const next = !isPublic
+                      const next = !isPublic;
                       await updateSetVisibility({
-                        data: { setId: id, visibility: next ? 'public' : 'private' },
-                      })
-                      setIsPublic(next)
+                        data: {
+                          setId: id,
+                          visibility: next ? "public" : "private",
+                        },
+                      });
+                      setIsPublic(next);
                     } catch {}
-                    setSavingVisibility(false)
+                    setSavingVisibility(false);
                   }}
                   disabled={savingVisibility}
                   className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-semibold text-[#303545] transition hover:bg-[#f6f7fb]"
                 >
                   <BookOpen className="size-5 text-[#646f90]" />
-                  <span>{isPublic ? 'Make private' : 'Make public (shared link)'}</span>
+                  <span>
+                    {isPublic ? "Make private" : "Make public (shared link)"}
+                  </span>
                 </button>
 
                 <div className="border-t border-[#edeff4] my-1" />
@@ -318,8 +337,8 @@ function SetPage() {
                 <button
                   type="button"
                   onClick={() => {
-                    setMenuOpen(false)
-                    setConfirmDelete(true)
+                    setMenuOpen(false);
+                    setConfirmDelete(true);
                   }}
                   className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-semibold text-[#e11d48] transition hover:bg-[#fef2f2]"
                 >
@@ -353,8 +372,8 @@ function SetPage() {
               index={previewIdx}
               count={cardList.length}
               onIndexChange={(next) => {
-                setPreviewIdx(next)
-                setFlipped(false)
+                setPreviewIdx(next);
+                setFlipped(false);
               }}
               controls={(api) => {
                 return (
@@ -379,7 +398,7 @@ function SetPage() {
                       Next
                     </Button>
                   </div>
-                )
+                );
               }}
             >
               {(i) => (
@@ -395,7 +414,9 @@ function SetPage() {
 
           {/* Mode selector tiles */}
           <section className="mt-12">
-            <h2 className="text-sm font-bold text-[#1a1d26]">Choose a study mode</h2>
+            <h2 className="text-sm font-bold text-[#1a1d26]">
+              Choose a study mode
+            </h2>
             <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {MODES.map((m) => (
                 <a
@@ -403,8 +424,8 @@ function SetPage() {
                   href={disabled ? undefined : `/set/${id}/${m.href}`}
                   className={`flex items-center gap-4 rounded-2xl border border-[#e8eaf0] bg-white p-4 shadow-sm transition ${
                     disabled
-                      ? 'pointer-events-none opacity-40'
-                      : 'hover:-translate-y-0.5 hover:border-[#d5d9e4] hover:shadow-md'
+                      ? "pointer-events-none opacity-40"
+                      : "hover:-translate-y-0.5 hover:border-[#d5d9e4] hover:shadow-md"
                   }`}
                 >
                   <span
@@ -414,7 +435,9 @@ function SetPage() {
                     <m.icon className="size-6" strokeWidth={2.25} />
                   </span>
                   <div>
-                    <p className="text-[15px] font-bold text-[#1a1d26]">{m.title}</p>
+                    <p className="text-[15px] font-bold text-[#1a1d26]">
+                      {m.title}
+                    </p>
                     <p className="mt-0.5 text-sm text-[#4a5065]">{m.desc}</p>
                   </div>
                 </a>
@@ -445,9 +468,13 @@ function SetPage() {
                     <span className="w-5 shrink-0 text-xs font-bold tabular-nums text-[#7c84a0]">
                       {i + 1}
                     </span>
-                    <p className="text-sm font-bold text-[#1a1d26]">{card.term}</p>
+                    <p className="text-sm font-bold text-[#1a1d26]">
+                      {card.term}
+                    </p>
                   </div>
-                  <p className="pl-8 text-sm text-[#4a5065] sm:pl-0">{card.definition}</p>
+                  <p className="pl-8 text-sm text-[#4a5065] sm:pl-0">
+                    {card.definition}
+                  </p>
                 </li>
               ))}
             </ul>
@@ -480,8 +507,8 @@ function SetPage() {
             {folders.length ? (
               <div className="overflow-hidden rounded-xl border border-[#e8eaf0]">
                 {folders.map((folder) => {
-                  const linked = folderIds.includes(folder.id)
-                  const pending = pendingLink === `folder:${folder.id}`
+                  const linked = folderIds.includes(folder.id);
+                  const pending = pendingLink === `folder:${folder.id}`;
                   return (
                     <label
                       key={folder.id}
@@ -491,19 +518,25 @@ function SetPage() {
                         type="checkbox"
                         checked={linked}
                         disabled={pending}
-                        onChange={() => void toggleLink('folder', folder.id, linked)}
+                        onChange={() =>
+                          void toggleLink("folder", folder.id, linked)
+                        }
                         className="size-4 rounded border-[#d9dde8] text-[#4255ff] focus:ring-[#4255ff]"
                       />
                       <span className="min-w-0 flex-1 text-sm font-semibold text-[#1a1d26]">
                         {folder.name}
                       </span>
-                      {pending && <LoaderCircle className="size-4 animate-spin text-[#4255ff]" />}
+                      {pending && (
+                        <LoaderCircle className="size-4 animate-spin text-[#4255ff]" />
+                      )}
                     </label>
-                  )
+                  );
                 })}
               </div>
             ) : (
-              <p className="text-sm text-[#646f90]">Create a folder from your library first.</p>
+              <p className="text-sm text-[#646f90]">
+                Create a folder from your library first.
+              </p>
             )}
           </section>
           <section>
@@ -513,8 +546,8 @@ function SetPage() {
             {classes.length ? (
               <div className="overflow-hidden rounded-xl border border-[#e8eaf0]">
                 {classes.map((classItem) => {
-                  const linked = classIds.includes(classItem.id)
-                  const pending = pendingLink === `class:${classItem.id}`
+                  const linked = classIds.includes(classItem.id);
+                  const pending = pendingLink === `class:${classItem.id}`;
                   return (
                     <label
                       key={classItem.id}
@@ -524,15 +557,19 @@ function SetPage() {
                         type="checkbox"
                         checked={linked}
                         disabled={pending}
-                        onChange={() => void toggleLink('class', classItem.id, linked)}
+                        onChange={() =>
+                          void toggleLink("class", classItem.id, linked)
+                        }
                         className="size-4 rounded border-[#d9dde8] text-[#4255ff] focus:ring-[#4255ff]"
                       />
                       <span className="min-w-0 flex-1 text-sm font-semibold text-[#1a1d26]">
                         {classItem.name}
                       </span>
-                      {pending && <LoaderCircle className="size-4 animate-spin text-[#4255ff]" />}
+                      {pending && (
+                        <LoaderCircle className="size-4 animate-spin text-[#4255ff]" />
+                      )}
                     </label>
-                  )
+                  );
                 })}
               </div>
             ) : (
@@ -544,5 +581,5 @@ function SetPage() {
         </div>
       </Dialog>
     </ProductPage>
-  )
+  );
 }

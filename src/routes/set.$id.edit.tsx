@@ -1,120 +1,124 @@
-import { createFileRoute, redirect } from '@tanstack/react-router'
-import { useEffect, useRef, useState } from 'react'
-import { Plus, Trash2, ArrowLeft } from 'lucide-react'
-import { updateSet } from '../../src/lib/actions/sets'
-import type { CardInput } from '../../lib/types'
-import { Button } from '../components/ui/button'
-import { Input } from '../components/ui/input'
-import { PageHeader } from '../components/page-header'
-import { cn } from '../lib/cn'
+import { createFileRoute, redirect } from "@tanstack/react-router";
+import { useEffect, useRef, useState } from "react";
+import { Plus, Trash2, ArrowLeft } from "lucide-react";
+import { updateSet } from "../../src/lib/actions/sets";
+import type { CardInput } from "../../lib/types";
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
+import { PageHeader } from "../components/page-header";
+import { cn } from "../lib/cn";
 
-export const Route = createFileRoute('/set/$id/edit')({
+export const Route = createFileRoute("/set/$id/edit")({
   head: () => ({
     meta: [
-      { title: 'Edit set | Openlet' },
+      { title: "Edit set | Openlet" },
       {
-        name: 'description',
+        name: "description",
         content:
-          'Edit your flashcard set on Openlet. Add, remove, or update terms and definitions.',
+          "Edit your flashcard set on Openlet. Add, remove, or update terms and definitions.",
       },
-      { property: 'og:title', content: 'Edit set | Openlet' },
+      { property: "og:title", content: "Edit set | Openlet" },
       {
-        property: 'og:description',
+        property: "og:description",
         content:
-          'Edit your flashcard set on Openlet. Add, remove, or update terms and definitions.',
+          "Edit your flashcard set on Openlet. Add, remove, or update terms and definitions.",
       },
-      { name: 'twitter:title', content: 'Edit set | Openlet' },
+      { name: "twitter:title", content: "Edit set | Openlet" },
       {
-        name: 'twitter:description',
+        name: "twitter:description",
         content:
-          'Edit your flashcard set on Openlet. Add, remove, or update terms and definitions.',
+          "Edit your flashcard set on Openlet. Add, remove, or update terms and definitions.",
       },
     ],
   }),
   beforeLoad: async () => {
-    const { getSession } = await import('../../src/lib/auth/actions')
-    const session = await getSession()
-    if (!session) throw redirect({ to: '/signin' })
+    const { getSession } = await import("../../src/lib/auth/actions");
+    const session = await getSession();
+    if (!session) throw redirect({ to: "/signin" });
   },
   component: EditSet,
-})
+});
 
 function EditSet() {
-  const { id } = Route.useParams()
-  const navigate = Route.useNavigate()
-  const [title, setTitle] = useState('')
-  const [description, setDescription] = useState('')
-  const [subject, setSubject] = useState('')
-  const [cardList, setCardList] = useState<CardInput[]>([])
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
-  const [removingIndex, setRemovingIndex] = useState<number | null>(null)
-  const rowRefs = useRef<(HTMLInputElement | null)[]>([])
+  const { id } = Route.useParams();
+  const navigate = Route.useNavigate();
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [subject, setSubject] = useState("");
+  const [cardList, setCardList] = useState<CardInput[]>([]);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [removingIndex, setRemovingIndex] = useState<number | null>(null);
+  const rowRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   useEffect(() => {
     fetch(`/api/sets/${id}`)
       .then((r) => r.json())
       .then((d) => {
-        setTitle(d.set.title)
-        setDescription(d.set.description || '')
-        setSubject(d.set.subject || '')
+        setTitle(d.set.title);
+        setDescription(d.set.description || "");
+        setSubject(d.set.subject || "");
         setCardList(
           (d.cards || []).map((c: { term: string; definition: string }) => ({
             term: c.term,
             definition: c.definition,
           })),
-        )
-        setLoading(false)
-      })
-  }, [id])
+        );
+        setLoading(false);
+      });
+  }, [id]);
 
-  function updateCard(i: number, key: 'term' | 'definition', value: string) {
+  function updateCard(i: number, key: "term" | "definition", value: string) {
     setCardList((prev) => {
-      const next = [...prev]
-      next[i] = { ...next[i], [key]: value }
-      return next
-    })
+      const next = [...prev];
+      next[i] = { ...next[i], [key]: value };
+      return next;
+    });
   }
 
   function addCard(focus = true) {
     setCardList((prev) => {
-      const next = [...prev, { term: '', definition: '' }]
+      const next = [...prev, { term: "", definition: "" }];
       if (focus) {
-        requestAnimationFrame(() => rowRefs.current[(next.length - 1) * 2]?.focus())
+        requestAnimationFrame(() =>
+          rowRefs.current[(next.length - 1) * 2]?.focus(),
+        );
       }
-      return next
-    })
+      return next;
+    });
   }
 
   function removeCard(i: number) {
-    if (cardList.length <= 1) return
-    setRemovingIndex(i)
+    if (cardList.length <= 1) return;
+    setRemovingIndex(i);
     setTimeout(() => {
-      setCardList((prev) => prev.filter((_, idx) => idx !== i))
-      setRemovingIndex(null)
-    }, 180)
+      setCardList((prev) => prev.filter((_, idx) => idx !== i));
+      setRemovingIndex(null);
+    }, 180);
   }
 
   async function handleSubmit() {
-    setError('')
-    const filled = cardList.filter((c) => c.term.trim() && c.definition.trim())
+    setError("");
+    const filled = cardList.filter((c) => c.term.trim() && c.definition.trim());
     if (filled.length === 0) {
-      setError('Add at least one complete card')
-      return
+      setError("Add at least one complete card");
+      return;
     }
     if (!title.trim()) {
-      setError('Title is required')
-      return
+      setError("Title is required");
+      return;
     }
-    setSaving(true)
+    setSaving(true);
     try {
-      await updateSet({ data: { setId: id, title, description, subject, cards: filled } })
-      navigate({ to: '/set/$id', params: { id } })
+      await updateSet({
+        data: { setId: id, title, description, subject, cards: filled },
+      });
+      navigate({ to: "/set/$id", params: { id } });
     } catch (err) {
-      console.error('[edit] Error saving set:', err)
-      setError('Something went wrong')
-      setSaving(false)
+      console.error("[edit] Error saving set:", err);
+      setError("Something went wrong");
+      setSaving(false);
     }
   }
 
@@ -128,10 +132,12 @@ function EditSet() {
           ))}
         </div>
       </div>
-    )
+    );
   }
 
-  const filledCount = cardList.filter((c) => c.term.trim() && c.definition.trim()).length
+  const filledCount = cardList.filter(
+    (c) => c.term.trim() && c.definition.trim(),
+  ).length;
 
   return (
     <div className="mx-auto max-w-3xl px-4 pt-8 md:px-6">
@@ -166,7 +172,9 @@ function EditSet() {
           />
           <div className="mt-3 grid gap-3 border-t border-border pt-3 sm:grid-cols-2">
             <div>
-              <label className="text-xs font-semibold text-muted-foreground">Description</label>
+              <label className="text-xs font-semibold text-muted-foreground">
+                Description
+              </label>
               <Input
                 className="mt-1"
                 value={description}
@@ -174,7 +182,9 @@ function EditSet() {
               />
             </div>
             <div>
-              <label className="text-xs font-semibold text-muted-foreground">Subject</label>
+              <label className="text-xs font-semibold text-muted-foreground">
+                Subject
+              </label>
               <Input
                 className="mt-1"
                 value={subject}
@@ -187,7 +197,12 @@ function EditSet() {
         <div>
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold text-foreground">Cards</h2>
-            <Button type="button" variant="outline" size="sm" onClick={() => addCard(true)}>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => addCard(true)}
+            >
               <Plus className="size-3.5" /> Add card
             </Button>
           </div>
@@ -196,8 +211,9 @@ function EditSet() {
               <div
                 key={i}
                 className={cn(
-                  'group grid grid-cols-[auto_1fr_1fr_auto] items-start gap-2 rounded-xl border border-border bg-card p-3 shadow-sm sm:gap-3',
-                  removingIndex === i && 'animate-card-dissipate pointer-events-none',
+                  "group grid grid-cols-[auto_1fr_1fr_auto] items-start gap-2 rounded-xl border border-border bg-card p-3 shadow-sm sm:gap-3",
+                  removingIndex === i &&
+                    "animate-card-dissipate pointer-events-none",
                 )}
               >
                 <span className="mt-2.5 w-6 text-center text-xs tabular-nums text-muted-foreground">
@@ -205,34 +221,36 @@ function EditSet() {
                 </span>
                 <Input
                   ref={(el) => {
-                    rowRefs.current[i * 2] = el
+                    rowRefs.current[i * 2] = el;
                   }}
                   placeholder="Term"
                   value={card.term}
-                  onChange={(e) => updateCard(i, 'term', e.target.value)}
+                  onChange={(e) => updateCard(i, "term", e.target.value)}
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault()
-                      rowRefs.current[i * 2 + 1]?.focus()
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      rowRefs.current[i * 2 + 1]?.focus();
                     }
                   }}
                   className="font-medium"
                 />
                 <Input
                   ref={(el) => {
-                    rowRefs.current[i * 2 + 1] = el
+                    rowRefs.current[i * 2 + 1] = el;
                   }}
                   placeholder="Definition"
                   value={card.definition}
-                  onChange={(e) => updateCard(i, 'definition', e.target.value)}
+                  onChange={(e) => updateCard(i, "definition", e.target.value)}
                   onKeyDown={(e) => {
                     if (
-                      e.key === 'Enter' ||
-                      (e.key === 'Tab' && !e.shiftKey && i === cardList.length - 1)
+                      e.key === "Enter" ||
+                      (e.key === "Tab" &&
+                        !e.shiftKey &&
+                        i === cardList.length - 1)
                     ) {
-                      e.preventDefault()
-                      if (i === cardList.length - 1) addCard(true)
-                      else rowRefs.current[(i + 1) * 2]?.focus()
+                      e.preventDefault();
+                      if (i === cardList.length - 1) addCard(true);
+                      else rowRefs.current[(i + 1) * 2]?.focus();
                     }
                   }}
                 />
@@ -255,14 +273,17 @@ function EditSet() {
         <div className="sticky bottom-4 rounded-xl border border-border bg-card shadow-sm">
           <div className="flex items-center justify-between gap-3 px-4 py-3 md:px-5">
             <p className="text-xs text-muted-foreground">
-              {filledCount} card{filledCount !== 1 ? 's' : ''}
+              {filledCount} card{filledCount !== 1 ? "s" : ""}
             </p>
-            <Button onClick={handleSubmit} disabled={filledCount === 0 || saving}>
-              {saving ? 'Saving...' : 'Save changes'}
+            <Button
+              onClick={handleSubmit}
+              disabled={filledCount === 0 || saving}
+            >
+              {saving ? "Saving..." : "Save changes"}
             </Button>
           </div>
         </div>
       ) : null}
     </div>
-  )
+  );
 }
