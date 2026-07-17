@@ -163,3 +163,80 @@ export const updateSetCover = createServerFn({ method: "POST" })
 
     return { ok: true };
   });
+
+const GenerateAICardsSchema = z.object({
+  notes: z.string().min(1),
+});
+
+export const generateAICards = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((data: unknown) => GenerateAICardsSchema.parse(data))
+  .handler(async ({ data }) => {
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) {
+      throw new Error("AI generation is not enabled on this server");
+    }
+
+    const baseUrl = process.env.OPENAI_BASE_URL || "https://api.openai.com/v1";
+    const model = process.env.OPENAI_MODEL || "gpt-5.4-mini";
+
+    const systemPrompt = `You are a flashcard generator. Convert notes into term/definition pairs.
+Return ONLY a JSON array of objects with "term" and "definition" fields.
+One concept per card. Precise and concise.`;
+
+    try {
+      const cleanBaseUrl = baseUrl.trim().replace(/\/+$/, "");
+      const res = await fetch(`${cleanBaseUrl}/chat/completions`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${apiKey.trim()}`,
+        },
+        body: JSON.stringify({
+          model: model.trim(),
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: data.notes },
+          ],
+          temperature: 0.3,
+        }),
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(
+          errorData.error?.message ||
+            `AI service returned error: ${res.statusText}`,
+        );
+      }
+
+      const resJson = await res.json();
+      const text = resJson.choices?.[0]?.message?.content || "";
+      const cards = JSON.parse(
+        text
+          .replace(/```json\s*/gi, "")
+          .replace(/```\s*$/gm, "")
+          .trim(),
+      );
+
+      if (!Array.isArray(cards) || cards.length === 0) {
+        throw new Error("No cards generated");
+      }
+      return cards as { term: string; definition: string }[];
+    } catch (e: unknown) {
+      throw new Error(
+        e instanceof Error
+          ? e.message
+          : "Failed to parse AI response into flashcards. Try again or check your input.",
+        { cause: e }
+      );
+    }
+  });
+
+export const checkAIGeneratorStatus = createServerFn({ method: "GET" })
+  .middleware([authMiddleware])
+  .handler(async () => {
+    return {
+      enabled: !!(process.env.OPENAI_API_KEY || "").trim(),
+    };
+  });

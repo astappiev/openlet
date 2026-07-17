@@ -1,12 +1,15 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useState } from "react";
 import { ArrowLeft } from "lucide-react";
-import { createSet } from "../../src/lib/actions/sets";
+import {
+  createSet,
+  checkAIGeneratorStatus,
+  generateAICards,
+} from "../../src/lib/actions/sets";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Textarea } from "../components/ui/textarea";
 import { PageHeader } from "../components/page-header";
-import { cn } from "../lib/cn";
 
 export const Route = createFileRoute("/ai-generate")({
   head: () => ({
@@ -36,12 +39,19 @@ export const Route = createFileRoute("/ai-generate")({
     const session = await getSession();
     if (!session) throw redirect({ to: "/signin" });
   },
+  loader: async () => {
+    try {
+      return await checkAIGeneratorStatus();
+    } catch {
+      return { enabled: false };
+    }
+  },
   component: AIGeneratePage,
 });
 
 function AIGeneratePage() {
   const navigate = Route.useNavigate();
-  const [apiKey, setApiKey] = useState("");
+  const { enabled } = Route.useLoaderData();
   const [notes, setNotes] = useState("");
   const [title, setTitle] = useState("");
   const [loading, setLoading] = useState(false);
@@ -49,91 +59,25 @@ function AIGeneratePage() {
     { term: string; definition: string }[] | null
   >(null);
   const [error, setError] = useState("");
-  const [provider, setProvider] = useState<"openai" | "anthropic">("openai");
 
   async function generate() {
     if (!notes.trim()) {
       setError("Paste your notes first");
       return;
     }
-    if (!apiKey.trim()) {
-      setError("API key required - calls go from your browser to the provider");
-      return;
-    }
     setError("");
     setLoading(true);
     setResult(null);
 
-    const systemPrompt = `You are a flashcard generator. Convert notes into term/definition pairs.
-Return ONLY a JSON array of objects with "term" and "definition" fields.
-One concept per card. Precise and concise.`;
-
     try {
-      let cards: { term: string; definition: string }[] = [];
-
-      if (provider === "openai") {
-        const res = await fetch("https://api.openai.com/v1/chat/completions", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${apiKey}`,
-          },
-          body: JSON.stringify({
-            model: "gpt-4o-mini",
-            messages: [
-              { role: "system", content: systemPrompt },
-              { role: "user", content: notes },
-            ],
-            temperature: 0.3,
-          }),
-        });
-        const data = await res.json();
-        if (!res.ok)
-          throw new Error(data.error?.message || "OpenAI request failed");
-        const text = data.choices?.[0]?.message?.content || "";
-        cards = JSON.parse(
-          text
-            .replace(/```json\s*/gi, "")
-            .replace(/```\s*$/gm, "")
-            .trim(),
-        );
-      } else {
-        const res = await fetch("https://api.anthropic.com/v1/messages", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "x-api-key": apiKey,
-            "anthropic-version": "2023-06-01",
-            "anthropic-dangerous-direct-browser-access": "true",
-          },
-          body: JSON.stringify({
-            model: "claude-3-haiku-20240307",
-            max_tokens: 4096,
-            system: systemPrompt,
-            messages: [{ role: "user", content: notes }],
-          }),
-        });
-        const data = await res.json();
-        if (!res.ok)
-          throw new Error(data.error?.message || "Anthropic request failed");
-        const text = data.content?.[0]?.text || "";
-        cards = JSON.parse(
-          text
-            .replace(/```json\s*/gi, "")
-            .replace(/```\s*$/gm, "")
-            .trim(),
-        );
-      }
-
-      if (!Array.isArray(cards) || cards.length === 0)
-        throw new Error("No cards generated");
+      const cards = await generateAICards({ data: { notes } });
       setResult(cards);
       if (!title) setTitle("Generated set");
     } catch (e: unknown) {
       setError(
         e instanceof Error
           ? e.message
-          : "Generation failed. Check your API key.",
+          : "Generation failed. Please try again later.",
       );
     }
     setLoading(false);
@@ -169,71 +113,47 @@ One concept per card. Precise and concise.`;
         }
         title="AI generator"
         badge="Beta"
-        description="Your key, your notes. Cards stay in Openlet."
+        description="Your notes. Cards stay in Openlet."
       />
 
-      <div className="mt-6 rounded-xl border border-border bg-card p-5 shadow-sm">
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Provider
-          </span>
-          <div className="flex gap-1 rounded-lg bg-muted p-0.5">
-            {(["openai", "anthropic"] as const).map((p) => (
-              <button
-                key={p}
-                onClick={() => setProvider(p)}
-                className={cn(
-                  "rounded-md px-3 py-1.5 text-xs font-semibold capitalize transition-colors",
-                  provider === p
-                    ? "bg-card text-foreground shadow-sm"
-                    : "text-muted-foreground",
-                )}
-              >
-                {p}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="mt-4">
-          <label className="text-xs font-semibold text-muted-foreground">
-            API key
-          </label>
-          <Input
-            type="password"
-            placeholder={provider === "openai" ? "sk-…" : "sk-ant-…"}
-            value={apiKey}
-            onChange={(e) => setApiKey(e.target.value)}
-            className="mt-1.5 font-mono text-sm"
-            autoComplete="off"
-          />
-          <p className="mt-1.5 text-xs text-muted-foreground">
-            Sent only to the provider from your browser. Not stored on Openlet
-            servers.
+      {!enabled ? (
+        <div className="mt-6 rounded-xl border border-border bg-card p-6 text-center shadow-sm">
+          <h3 className="text-lg font-bold text-foreground">
+            AI Generation Disabled
+          </h3>
+          <p className="mt-2 text-sm text-muted-foreground">
+            This feature is currently not configured on this server. To enable
+            it, please set the{" "}
+            <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs text-foreground">
+              OPENAI_API_KEY
+            </code>{" "}
+            environment variable on the backend.
           </p>
         </div>
+      ) : (
+        <div className="mt-6 rounded-xl border border-border bg-card p-5 shadow-sm space-y-4">
+          <div>
+            <label className="text-xs font-semibold text-muted-foreground">
+              Notes
+            </label>
+            <Textarea
+              placeholder="Paste lecture notes, textbook excerpts, or outlines…"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              rows={12}
+              className="mt-1.5"
+            />
+          </div>
 
-        <div className="mt-4">
-          <label className="text-xs font-semibold text-muted-foreground">
-            Notes
-          </label>
-          <Textarea
-            placeholder="Paste lecture notes, textbook excerpts, or outlines…"
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            rows={8}
-            className="mt-1.5"
-          />
+          <Button
+            className="w-full"
+            onClick={generate}
+            disabled={loading || !notes.trim()}
+          >
+            {loading ? "Generating…" : "Generate cards"}
+          </Button>
         </div>
-
-        <Button
-          className="mt-4 w-full"
-          onClick={generate}
-          disabled={loading || !notes.trim()}
-        >
-          {loading ? "Generating…" : "Generate cards"}
-        </Button>
-      </div>
+      )}
 
       {error && (
         <p className="mt-4 rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">

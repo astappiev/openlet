@@ -58,4 +58,3 @@ export function throwUserError(err: unknown, fallback: string): never {
   }
   throw new Error(fallback);
 }
-
