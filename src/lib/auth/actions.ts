@@ -14,13 +14,17 @@ export const signInWithProvider = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     const { supabase, flushCookies } = createClient();
-    const headers = getRequestHeaders();
-    const host = headers.get("host") ?? "localhost:3000";
-    const protocol =
-      host.startsWith("localhost") || host.startsWith("127.0.0.1")
-        ? "http"
-        : "https";
-    const siteUrl = `${protocol}://${host}`;
+    const siteUrl =
+      process.env.VITE_SITE_URL ||
+      (() => {
+        const headers = getRequestHeaders();
+        const host = headers.get("host") ?? "localhost:3000";
+        const protocol =
+          host.startsWith("localhost") || host.startsWith("127.0.0.1")
+            ? "http"
+            : "https";
+        return `${protocol}://${host}`;
+      })();
     const { data: authData, error } = await supabase.auth.signInWithOAuth({
       provider: data.provider,
       options: {
