@@ -44,18 +44,18 @@ export function isSafeUserMessage(message: string): boolean {
 }
 
 export function toUserMessage(err: unknown, fallback: string): string {
+  console.error("[openlet]", err);
   const msg = extractMessage(err).trim();
   if (msg && isSafeUserMessage(msg)) return msg;
   return fallback;
 }
 
 export function throwUserError(err: unknown, fallback: string): never {
+  console.error("[openlet]", err);
   const msg = extractMessage(err).trim();
   if (msg && isSafeUserMessage(msg)) {
     throw new Error(msg);
   }
-  if (process.env.NODE_ENV !== "production") {
-    console.error("[openlet]", err);
-  }
   throw new Error(fallback);
 }
+
