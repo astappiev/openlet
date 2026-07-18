@@ -21,86 +21,74 @@ import type { CookieOptions } from "@supabase/ssr";
 export function createClient() {
   const headers = getRequestHeaders();
   const cookie = headers.get("cookie") ?? "";
-  const pendingCookies: string[] = [];
 
-  let testUser: { id: string; email: string } | null = null;
-  const authSecret = process.env.AUTH_SECRET;
-  if (authSecret) {
-    const match = cookie.match(/(?:^|;\s*)openlet_session=([^;]*)/);
-    if (match && match[1]) {
-      try {
-        const token = match[1];
-        const parts = token.split(".");
-        if (parts.length === 3) {
-          const payload = JSON.parse(
-            Buffer.from(parts[1], "base64").toString("utf8"),
-          );
-          if (payload.exp && Date.now() < payload.exp * 1000) {
-            testUser = {
-              id: payload.userId,
-              email: payload.email,
-            };
-          }
-        }
-      } catch {}
-    }
-  }
+  const cookiePairs = parseCookieString(cookie);
+
+  const pendingCookies: {
+    name: string;
+    value: string;
+    options: CookieOptions;
+  }[] = [];
+  const pendingCacheHeaders: Record<string, string> = {};
 
   const supabase = createServerClient(
     process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || "",
     process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || "",
     {
       cookies: {
-        get(key: string) {
-          const match = cookie.match(
-            new RegExp(
-              `(?:^|;\\s*)${key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}=([^;]*)`,
-            ),
-          );
-          return match ? decodeURIComponent(match[1]) : undefined;
+        getAll() {
+          return cookiePairs;
         },
-        set(key: string, value: string, options: CookieOptions) {
-          let c = `${key}=${encodeURIComponent(value)}`;
-          if (options.path) c += `; Path=${options.path}`;
-          if (options.maxAge !== undefined) c += `; Max-Age=${options.maxAge}`;
-          if (options.httpOnly) c += "; HttpOnly";
-          if (options.secure) c += "; Secure";
-          if (options.sameSite) c += `; SameSite=${options.sameSite}`;
-          pendingCookies.push(c);
-        },
-        remove(key: string, _options: CookieOptions) {
-          pendingCookies.push(`${key}=; Max-Age=0; Path=/`);
+        setAll(cookiesToSet, cacheHeaders) {
+          pendingCookies.push(...cookiesToSet);
+          Object.assign(pendingCacheHeaders, cacheHeaders);
         },
       },
     },
   );
 
-  if (testUser) {
-    supabase.auth.getUser = async () => {
-      return {
-        data: {
-          user: {
-            id: testUser!.id,
-            email: testUser!.email,
-            user_metadata: {},
-            app_metadata: {},
-            aud: "authenticated",
-            created_at: new Date().toISOString(),
-          } as any,
-        },
-        error: null,
-      };
-    };
-  }
-
   function flushCookies() {
     if (pendingCookies.length > 0) {
-      // Pass the pendingCookies array directly. TanStack Start / Nitro
-      // will correctly output multiple Set-Cookie headers.
-      setResponseHeaders({ "set-cookie": pendingCookies } as any);
+      const setCookieValues = pendingCookies.map(
+        ({ name, value, options }) => serializeCookie(name, value, options),
+      );
+      setResponseHeaders({ "set-cookie": setCookieValues } as any);
+      if (Object.keys(pendingCacheHeaders).length > 0) {
+        setResponseHeaders(pendingCacheHeaders as any);
+      }
       pendingCookies.length = 0;
+      Object.keys(pendingCacheHeaders).forEach((k) => delete pendingCacheHeaders[k]);
     }
   }
 
   return { supabase, flushCookies };
+}
+
+function parseCookieString(cookie: string) {
+  const pairs: { name: string; value: string }[] = [];
+  if (!cookie) return pairs;
+  for (const part of cookie.split(";")) {
+    const idx = part.indexOf("=");
+    if (idx === -1) continue;
+    const name = part.substring(0, idx).trim();
+    const value = decodeURIComponent(part.substring(idx + 1).trim());
+    if (name) pairs.push({ name, value });
+  }
+  return pairs;
+}
+
+function serializeCookie(
+  name: string,
+  value: string,
+  options: CookieOptions,
+): string {
+  let c = `${name}=${encodeURIComponent(value)}`;
+  if (options.path) c += `; Path=${options.path}`;
+  if (options.maxAge !== undefined) c += `; Max-Age=${options.maxAge}`;
+  if (options.expires) c += `; Expires=${options.expires.toUTCString()}`;
+  if (options.httpOnly) c += "; HttpOnly";
+  if (options.secure) c += "; Secure";
+  if (options.sameSite) c += `; SameSite=${options.sameSite}`;
+  if (options.domain) c += `; Domain=${options.domain}`;
+  return c;
 }

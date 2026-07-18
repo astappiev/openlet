@@ -6,6 +6,17 @@ import { db } from "../../../lib/db";
 import { profiles } from "../../../lib/db/schema";
 import { eq, sql } from "drizzle-orm";
 
+function getSiteUrl() {
+  const headers = getRequestHeaders();
+  const host = headers.get("host") ?? "localhost:3000";
+  const protocol =
+    host.startsWith("localhost") || host.startsWith("127.0.0.1")
+      ? "http"
+      : "https";
+  const runtime = process.env.SITE_URL || process.env.VITE_SITE_URL;
+  return runtime || `${protocol}://${host}`;
+}
+
 // ── Social sign in (redirect-based OAuth) ──
 
 export const signInWithProvider = createServerFn({ method: "POST" })
@@ -14,17 +25,7 @@ export const signInWithProvider = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     const { supabase, flushCookies } = createClient();
-    const siteUrl =
-      process.env.VITE_SITE_URL ||
-      (() => {
-        const headers = getRequestHeaders();
-        const host = headers.get("host") ?? "localhost:3000";
-        const protocol =
-          host.startsWith("localhost") || host.startsWith("127.0.0.1")
-            ? "http"
-            : "https";
-        return `${protocol}://${host}`;
-      })();
+    const siteUrl = getSiteUrl();
     const { data: authData, error } = await supabase.auth.signInWithOAuth({
       provider: data.provider,
       options: {
@@ -133,5 +134,44 @@ export const getSession = createServerFn({ method: "GET" }).handler(
     } catch {
       return null;
     }
+  },
+);
+
+// ── Check which OAuth providers are enabled on Supabase ──
+
+export const getAvailableProviders = createServerFn({ method: "GET" }).handler(
+  async () => {
+    const url = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || "";
+    const anonKey =
+      process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || "";
+    let googleEnabled = false;
+
+    if (url && anonKey) {
+      try {
+        const response = await fetch(`${url}/auth/v1/settings`, {
+          headers: {
+            apikey: anonKey,
+            Authorization: `Bearer ${anonKey}`,
+          },
+        });
+        if (response.ok) {
+          const settings = await response.json();
+          googleEnabled = !!settings?.external?.google;
+        }
+      } catch (err) {
+        console.error("Error fetching Supabase settings:", err);
+      }
+    }
+
+    // Override via env var if explicitly set
+    if (process.env.SUPABASE_GOOGLE_ENABLED !== undefined) {
+      googleEnabled = process.env.SUPABASE_GOOGLE_ENABLED === "true";
+    } else if (process.env.VITE_SUPABASE_GOOGLE_ENABLED !== undefined) {
+      googleEnabled = process.env.VITE_SUPABASE_GOOGLE_ENABLED === "true";
+    }
+
+    return {
+      google: googleEnabled,
+    };
   },
 );

@@ -26,7 +26,12 @@ export default defineConfig({
   },
   plugins: [
     tailwindcss(),
-    tanstackStart(),
+    tanstackStart({
+      router: {
+        quoteStyle: "double",
+        semicolons: true,
+      },
+    }),
     nitro(),
     viteReact(),
     VitePWA({
