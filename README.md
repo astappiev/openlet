@@ -144,7 +144,6 @@ lib/
 
 drizzle/               # Database migration states
 public/                # Static assets (logos, icons, banner images)
-scripts/               # Utility scripts (logo generation, schema migration, test seeding)
 tests/                 # Comprehensive unit, security, and integration test suites
 ```
 

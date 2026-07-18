@@ -28,11 +28,8 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "logos": "node scripts/generate-logo-assets.mjs",
-    "seed:test-user": "node --env-file=.env scripts/seed-test-user.mjs",
     "test": "vitest run",
-    "test:watch": "vitest",
-    "test:stack": "pnpm seed:test-user && vitest run"
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@base-ui/react": "^1.5.0",
